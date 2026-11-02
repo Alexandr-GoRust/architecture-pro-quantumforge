@@ -1,0 +1,18 @@
+services:
+  rag-bot:
+    build: .
+    container_name: rag-bot
+    environment:
+      - LLM_BASE_URL=${LLM_BASE_URL}
+      - LLM_API_KEY=${LLM_API_KEY}
+      - LLM_MODEL=${LLM_MODEL}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+    volumes:
+      - ./index:/app/index            # FAISS-индекс (бот + FAISS в одном контейнере)
+      - ./logs:/app/logs
+      - hf-cache:/root/.cache         # кеш эмбеддера между перезапусками
+    command: python telegram_bot.py   # тариф Про: Telegram-интерфейс
+    restart: unless-stopped
+
+volumes:
+  hf-cache:
