@@ -6,3 +6,5 @@ __pycache__/
 .idea/
 models/
 *.gguf
+index/faiss.index
+index/chunks_meta.pkl
