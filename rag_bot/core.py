@@ -26,6 +26,7 @@ from pathlib import Path
 import faiss
 import numpy as np
 from dotenv import load_dotenv
+import httpx
 from openai import OpenAI
 from sentence_transformers import SentenceTransformer
 
@@ -122,7 +123,11 @@ class RAGBot:
         with open(INDEX_DIR / "chunks_meta.pkl", "rb") as f:
             self.chunks = pickle.load(f)
         self.encoder = SentenceTransformer(EMBED_MODEL)
-        self.client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY)
+        # trust_env=False: не наследовать системный прокси macOS —
+        # локальная ollama (localhost) должна ходить напрямую
+        self.client = OpenAI(base_url=LLM_BASE_URL, api_key=LLM_API_KEY,
+                             http_client=httpx.Client(trust_env=False,
+                                                       timeout=300.0))
         self.top_k = top_k
         self.min_score = min_score
         self.defense = defense  # выключается для демонстрации атаки (Задание 5)
