@@ -1,0 +1,39 @@
+@startuml
+title Задание 7: обработка запроса и оценка качества (sequence)
+
+actor Пользователь as U
+participant "RAG-бот" as B
+participant "Encoder\n(MiniLM)" as E
+database "FAISS" as F
+participant "LLM" as L
+participant "evaluate.py /\nlogger" as V
+participant "Фильтры\nбезопасности" as G
+
+U -> B : вопрос
+B -> E : текст -> вектор (384d)
+E --> B : эмбеддинг
+B -> F : kNN-поиск (k=5)
+alt ничего не найдено / score < порога
+    F --> B : 0 чанков
+    B --> U : «Я не знаю» (честный отказ)
+    B -> V : лог: chunks_found=0, success=false
+else найдены чанки
+    F --> B : топ-k чанков
+    B -> G : пост-фильтр инъекций (Задание 5)
+    G --> B : очищенные чанки
+    B -> L : System + few-shot + CONTEXT + вопрос (CoT)
+    L --> B : ответ с цитатами [n]
+    B -> G : post-generation guard
+    alt ответ безопасен
+        B --> U : ответ + источники
+        B -> V : лог: success=true, sources
+    else обнаружен секрет/команда
+        B --> U : «Ответ заблокирован фильтром»
+        B -> V : лог: blocked=true
+    end
+end
+== Оценка (offline) ==
+V -> V : golden set: сверка с ожиданиями
+V --> V : отчёт: пробелы тем, ложные ответы
+note right of V : сбойные точки: пустой индекс,\nневалидный чанк, таймаут LLM — фиксируются в логе
+@enduml
