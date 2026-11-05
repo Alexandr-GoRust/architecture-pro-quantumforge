@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+.idea/
+models/
+*.gguf
+index/faiss.index
+index/chunks_meta.pkl
