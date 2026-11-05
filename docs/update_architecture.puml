@@ -1,21 +1,27 @@
 @startuml
 title Задание 6: автоматическое обновление векторного индекса
 
-actor "Разработчики\n(новые документы)" as Dev
-folder "knowledge_base/" as KB
-component "cron\n(0 6 * * *)" as Cron
-component "update_index.py" as Upd
-component "SentenceTransformer\n(paraphrase-multilingual)" as Enc
-database "FAISS\nindex/faiss.index" as Faiss
-file "logs/update.log" as Log
-component "RAG-бот\n(chat / Telegram)" as Bot
+left to right direction
+skinparam defaultTextAlignment center
+skinparam wrapWidth 160
+skinparam componentStyle rectangle
 
-Dev -> KB : новые/изменённые .md
-Cron -> Upd : ежедневный запуск 06:00
-Upd -> KB : скан + sha256 (детект новых)
-Upd -> Upd : чанкинг (900 симв., overlap 130)
-Upd -> Enc : чанки -> эмбеддинги (384d)
-Upd -> Faiss : инкрементальный add()
-Upd -> Log : время/чанки/размер/ошибки
-Bot -> Faiss : поиск kNN
+actor "Разработчики" as Dev
+folder "knowledge_base/\n(новые .md)" as KB
+component "cron\n0 6 * * *" as Cron
+component "update_index.py\n(детект по sha256)" as Upd
+component "чанкинг\n900 симв / overlap 130" as Chunk
+component "SentenceTransformer\nmultilingual MiniLM" as Enc
+database "FAISS\nfaiss.index" as Faiss
+file "logs/update.log" as Log
+component "RAG-бот\nchat / Telegram" as Bot
+
+Dev --> KB
+Cron --> Upd : запуск\n06:00
+Upd --> KB : 1. скан
+Upd --> Chunk : 2. новые файлы
+Chunk --> Enc : 3. чанки
+Enc --> Faiss : 4. эмбеддинги\nadd()
+Upd --> Log : 5. лог:\nвремя / чанки / ошибки
+Bot --> Faiss : поиск kNN
 @enduml
